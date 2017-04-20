@@ -50,16 +50,31 @@ class OpenStack(object):
             credentials.OS_USERNAME,
             credentials.OS_PASSWORD,
             ex_force_auth_url=credentials.OS_AUTH_URL,
-            ex_force_auth_version="2.0_password")
+            ex_force_auth_version="3.x_password",
+            ex_tenant_name=credentials.OS_TENANT_NAME,
+            # ex_domain_name=credentials.OS_PROJECT_DOMAIN_ID,
+            ex_force_service_type='compute',
+            ex_force_service_region=credentials.OS_REGION_NAME)
+
+
+
+    def _list(self, data):
+        d = {}
+
+        for image in data:
+            print (image.__dict__)
+            d[image.name] = image.__dict__
+            del d[image.name]["_uuid"]
+            del d[image.name]["driver"]
+
+        return d
 
     def images(self):
-
-        images = self.driver.list_images()
-        return images
+        return (self._list(self.driver.list_images()))
 
 
     def flavors(self):
-        return None
+        return (self._list(self.driver.list_sizes()))
 
     def vms(self):
-        return None
+        return (self._list(self.driver.list_nodes()))

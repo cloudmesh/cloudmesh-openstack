@@ -8,6 +8,7 @@ from cloudmesh.common.Printer import Printer
 from collections import OrderedDict
 from cloudmesh.common.default import Default
 from cloudmesh.openstack.api import OpenStack
+from pprint import pprint
 
 class OpenstackCommand(PluginCommand):
     @command
@@ -87,4 +88,24 @@ class OpenstackCommand(PluginCommand):
             print (arguments.CLOUD)
 
             provider = OpenStack(arguments.CLOUD)
-            print (provider.images())
+            pprint (provider.images())
+
+        elif arguments.flavor and arguments.list:
+
+            if arguments.CLOUD is None:
+                arguments.CLOUD = cloud
+
+            print (arguments.CLOUD)
+
+            provider = OpenStack(arguments.CLOUD)
+            pprint (provider.flavors())
+
+        elif arguments.vm and arguments.list:
+
+            if arguments.CLOUD is None:
+                arguments.CLOUD = cloud
+
+            print (arguments.CLOUD)
+
+            provider = OpenStack(arguments.CLOUD)
+            pprint (provider.vms())
