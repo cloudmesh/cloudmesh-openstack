@@ -7,7 +7,11 @@ from cloudmesh.common.util import readfile
 from cloudmesh.common.Printer import Printer
 from collections import OrderedDict
 from cloudmesh.common.default import Default
+from cloudmesh.common.FlatDict2 import FlatDict2
+from cloudmesh.common.FlatDict import flatten, flatme
 from cloudmesh.openstack.api import OpenStack
+from cloudmesh.common.error import Error
+
 from pprint import pprint
 
 class OpenstackCommand(PluginCommand):
@@ -86,17 +90,39 @@ class OpenstackCommand(PluginCommand):
             if arguments.CLOUD is None:
                 arguments.CLOUD = cloud
 
-            print (arguments.CLOUD)
+            #print (arguments.CLOUD)
 
             provider = OpenStack(arguments.CLOUD)
-            pprint (provider.images())
+            images = provider.images()
+
+            try:
+                fd = flatme(images)
+            except Exception as e:
+                Error.traceback(error=e, debug=True, trace=True)
+
+
+
+            order = ["name", "extra__metadata__user_id", "extra__metadata__image_state", "extra__updated"]
+            header = ["name","user", "state", "updated"]
+
+            if arguments.format == "table":
+                print(Printer.dict(fd,
+                               order=order,
+                               header=header,
+                               output=arguments.format))
+            #elif arguments.format == "dict":
+            #    print(yaml.dump(images, indent=4, Dumper=yaml.RoundTripDumper))
+            else:
+                print(Printer.dict(images, output=arguments.format))
+
+
 
         elif arguments.flavor and arguments.list:
 
             if arguments.CLOUD is None:
                 arguments.CLOUD = cloud
 
-            print (arguments.CLOUD)
+            # print (arguments.CLOUD)
 
             provider = OpenStack(arguments.CLOUD)
             d = provider.flavors()
@@ -111,7 +137,7 @@ class OpenstackCommand(PluginCommand):
             if arguments.CLOUD is None:
                 arguments.CLOUD = cloud
 
-            print (arguments.CLOUD)
+            #print (arguments.CLOUD)
 
             provider = OpenStack(arguments.CLOUD)
             pprint (provider.vms())

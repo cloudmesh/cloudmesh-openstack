@@ -33,7 +33,7 @@ class OpenStack(object):
         d = yaml.load(content, Loader=yaml.RoundTripLoader)
         self.info = d["cloudmesh"]["clouds"][cloud]
 
-        print(yaml.dump(self.info, indent=4, Dumper=yaml.RoundTripDumper))
+        # print(yaml.dump(self.info, indent=4, Dumper=yaml.RoundTripDumper))
 
         self.driver = None
         self.authenticate()
@@ -44,8 +44,8 @@ class OpenStack(object):
         provider = get_driver(Provider.OPENSTACK)
 
         credentials = dotdict(self.info["credentials"])
-        print (credentials)
-        print ("U", credentials.OS_USERNAME)
+        # print (credentials)
+        # print ("U", credentials.OS_USERNAME)
         self.driver = provider(
             credentials.OS_USERNAME,
             credentials.OS_PASSWORD,
@@ -62,7 +62,7 @@ class OpenStack(object):
         d = {}
 
         for image in data:
-            print (image.__dict__)
+            # print (image.__dict__)
             d[image.name] = image.__dict__
             del d[image.name]["_uuid"]
             del d[image.name]["driver"]
