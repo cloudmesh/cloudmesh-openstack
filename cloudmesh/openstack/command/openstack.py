@@ -7,6 +7,7 @@ from cloudmesh.common.util import readfile
 from cloudmesh.common.Printer import Printer
 from collections import OrderedDict
 from cloudmesh.common.default import Default
+from cloudmesh.openstack.api import OpenStack
 
 class OpenstackCommand(PluginCommand):
     @command
@@ -17,6 +18,9 @@ class OpenstackCommand(PluginCommand):
           Usage:
                 openstack yaml 
                 openstack yaml list [CLOUD]
+                openstack image list [CLOUD]
+                openstack flavor list [CLOUD]
+                openstack vm list [CLOUD]
 
           This command does some useful things.
 
@@ -29,6 +33,9 @@ class OpenstackCommand(PluginCommand):
         """
         # print(arguments)
 
+        default = Default()
+        cloud = arguments.CLOUD or default["general"]["cloud"]
+        default.close()
 
         if arguments.yaml and arguments.list:
 
@@ -37,7 +44,6 @@ class OpenstackCommand(PluginCommand):
             content = readfile(filename)
             d = yaml.load(content, Loader=yaml.RoundTripLoader)
             if arguments.CLOUD is None:
-                default = Default()
                 default_cloud = default["general"]["cloud"]
 
 
@@ -58,7 +64,6 @@ class OpenstackCommand(PluginCommand):
 
                 print (Printer.dict(info,
                                     order=["default", "name", "type", "label", "flavor", "image"]))
-                default.close()
 
             else:
                 cloud = arguments.CLOUD
@@ -73,3 +78,13 @@ class OpenstackCommand(PluginCommand):
             content = readfile(filename)
             d = yaml.load(content, Loader=yaml.RoundTripLoader)
             print(yaml.dump(d, indent=4, Dumper=yaml.RoundTripDumper))
+
+        elif arguments.image and arguments.list:
+
+            if arguments.CLOUD is None:
+                arguments.CLOUD = cloud
+
+            print (arguments.CLOUD)
+
+            provider = OpenStack(arguments.CLOUD)
+            print (provider.images())
