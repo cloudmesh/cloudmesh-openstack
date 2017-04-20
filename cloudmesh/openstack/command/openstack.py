@@ -18,10 +18,10 @@ class OpenstackCommand(PluginCommand):
 
           Usage:
                 openstack yaml 
-                openstack yaml list [CLOUD]
-                openstack image list [CLOUD]
-                openstack flavor list [CLOUD]
-                openstack vm list [CLOUD]
+                openstack yaml list [CLOUD] 
+                openstack image list [CLOUD] [--format=FORMAT]
+                openstack flavor list [CLOUD] [--format=FORMAT]
+                openstack vm list [CLOUD] [--format=FORMAT]
 
           This command does some useful things.
 
@@ -37,6 +37,7 @@ class OpenstackCommand(PluginCommand):
         default = Default()
         cloud = arguments.CLOUD or default["general"]["cloud"]
         default.close()
+        arguments.format = arguments["--format"] or 'table'
 
         if arguments.yaml and arguments.list:
 
@@ -98,7 +99,12 @@ class OpenstackCommand(PluginCommand):
             print (arguments.CLOUD)
 
             provider = OpenStack(arguments.CLOUD)
-            pprint (provider.flavors())
+            d = provider.flavors()
+            print (Printer.dict(d,
+                                output=arguments.format,
+                                order=['id','name', 'ram', 'vcpus', 'disk']))
+
+
 
         elif arguments.vm and arguments.list:
 
