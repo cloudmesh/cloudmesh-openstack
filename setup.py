@@ -25,6 +25,9 @@ def readfile(filename):
 
 #requiers = readfile ('requirements.txt')
 requiers = """
+humanize
+apache-libcloud
+timestring
 psutil
 pygments
 tox

@@ -7,12 +7,16 @@ from cloudmesh.common.util import readfile
 from cloudmesh.common.Printer import Printer
 from collections import OrderedDict
 from cloudmesh.common.default import Default
-from cloudmesh.common.FlatDict2 import FlatDict2
+from cloudmesh.common.FlatDict import FlatDict2
 from cloudmesh.common.FlatDict import flatten, flatme
 from cloudmesh.openstack.api import OpenStack
 from cloudmesh.common.error import Error
+import humanize
+import timestring
+import requests
 
 from pprint import pprint
+
 
 class OpenstackCommand(PluginCommand):
     @command
@@ -21,6 +25,7 @@ class OpenstackCommand(PluginCommand):
         ::
 
           Usage:
+                openstack info
                 openstack yaml 
                 openstack yaml list [CLOUD] 
                 openstack image list [CLOUD] [--format=FORMAT]
@@ -39,19 +44,25 @@ class OpenstackCommand(PluginCommand):
         # print(arguments)
 
         default = Default()
-        cloud = arguments.CLOUD or default["general"]["cloud"]
+        cloud = arguments.CLOUD or default["global"]["cloud"]
         default.close()
         arguments.format = arguments["--format"] or 'table'
 
-        if arguments.yaml and arguments.list:
+        if arguments.info:
 
+            if arguments.CLOUD is None:
+                arguments.CLOUD = cloud
+
+            provider = OpenStack(arguments.CLOUD)
+            provider.information()
+
+        elif arguments.yaml and arguments.list:
 
             filename = path_expand("~/.cloudmesh/cloudmesh.yaml")
             content = readfile(filename)
             d = yaml.load(content, Loader=yaml.RoundTripLoader)
             if arguments.CLOUD is None:
-                default_cloud = default["general"]["cloud"]
-
+                default_cloud = default["global"]["cloud"]
 
                 # print (yaml.dump(d, indent=4, Dumper=yaml.RoundTripDumper))
                 info = OrderedDict()
@@ -68,8 +79,8 @@ class OpenstackCommand(PluginCommand):
                     if default_cloud == cloud:
                         info[cloud]["default"] = "*"
 
-                print (Printer.dict(info,
-                                    order=["default", "name", "type", "label", "flavor", "image"]))
+                print(Printer.dict(info,
+                                   order=["default", "name", "type", "label", "flavor", "image"]))
 
             else:
                 cloud = arguments.CLOUD
@@ -78,7 +89,6 @@ class OpenstackCommand(PluginCommand):
 
 
         elif arguments.yaml:
-
 
             filename = path_expand("~/.cloudmesh/cloudmesh.yaml")
             content = readfile(filename)
@@ -90,7 +100,7 @@ class OpenstackCommand(PluginCommand):
             if arguments.CLOUD is None:
                 arguments.CLOUD = cloud
 
-            #print (arguments.CLOUD)
+            # print (arguments.CLOUD)
 
             provider = OpenStack(arguments.CLOUD)
             images = provider.images()
@@ -100,17 +110,17 @@ class OpenstackCommand(PluginCommand):
             except Exception as e:
                 Error.traceback(error=e, debug=True, trace=True)
 
-
-
             order = ["name", "extra__metadata__user_id", "extra__metadata__image_state", "extra__updated"]
-            header = ["name","user", "state", "updated"]
+            header = ["name", "user", "state", "updated"]
 
             if arguments.format == "table":
+                print(arguments.CLOUD)
                 print(Printer.dict(fd,
-                               order=order,
-                               header=header,
-                               output=arguments.format))
-            #elif arguments.format == "dict":
+                                   sort_keys="name",
+                                   order=order,
+                                   header=header,
+                                   output=arguments.format))
+            # elif arguments.format == "dict":
             #    print(yaml.dump(images, indent=4, Dumper=yaml.RoundTripDumper))
             else:
                 print(Printer.dict(images, output=arguments.format))
@@ -126,9 +136,11 @@ class OpenstackCommand(PluginCommand):
 
             provider = OpenStack(arguments.CLOUD)
             d = provider.flavors()
-            print (Printer.dict(d,
-                                output=arguments.format,
-                                order=['id','name', 'ram', 'vcpus', 'disk']))
+            print(arguments.CLOUD)
+            print(Printer.dict(d,
+                               sort_keys="id",
+                               output=arguments.format,
+                               order=['id', 'name', 'ram', 'vcpus', 'disk']))
 
 
 
@@ -137,7 +149,37 @@ class OpenstackCommand(PluginCommand):
             if arguments.CLOUD is None:
                 arguments.CLOUD = cloud
 
-            #print (arguments.CLOUD)
+            # print (arguments.CLOUD)
 
             provider = OpenStack(arguments.CLOUD)
-            pprint (provider.vms())
+            elements = provider.vms()
+
+            try:
+                fd = flatme(elements)
+            except Exception as e:
+                Error.traceback(error=e, debug=True, trace=True)
+
+            order = ["name", 'extra__vm_state', 'extra__metadata__image', 'extra__metadata__flavor', "extra__key_name",
+                     'extra__metadata__group', "extra__userId", "extra__created", 'private_ips', 'public_ips']
+            header = ["name", "state", "image", "flavor", "key", "group", "user", "created", "private", "public"]
+
+            if arguments.format == "table":
+
+                for element in fd:
+                    fd[element]['private_ips'] = ','.join(fd[element]['private_ips'])
+                    fd[element]['public_ips'] = ','.join(fd[element]['public_ips'])
+                    # fd[element]["extra__created"] = humanize.timedelta(fd[element]["extra__created"])
+                    t = humanize.naturaltime(timestring.Date(fd[element]["extra__created"]).date)
+                    fd[element]["extra__created"] = t
+                print(arguments.CLOUD)
+                print(Printer.dict(fd,
+                                   # sort_keys=True,
+                                   order=order,
+                                   header=header,
+                                   output=arguments.format))
+            # elif arguments.format == "dict":
+            #    print(yaml.dump(images, indent=4, Dumper=yaml.RoundTripDumper))
+            elif arguments.format == 'flatten':
+                pprint(fd)
+            else:
+                print(Printer.dict(elements, output=arguments.format))
