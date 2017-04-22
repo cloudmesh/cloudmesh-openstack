@@ -41,7 +41,7 @@ class OpenstackCommand(PluginCommand):
                 openstack yaml list [CLOUD] 
                 openstack image list [CLOUD] [--format=FORMAT]
                 openstack flavor list [CLOUD] [--format=FORMAT]
-                openstack vm list [CLOUD] [--format=FORMAT]
+                openstack vm list [CLOUD] [--user=USER] [--format=FORMAT] 
 
           This command does some useful things.
 
@@ -58,6 +58,8 @@ class OpenstackCommand(PluginCommand):
         cloud = arguments.CLOUD or default["global"]["cloud"]
         default.close()
         arguments.format = arguments["--format"] or 'table'
+
+        arguments.user = arguments["--user"]
 
         if arguments.info:
 
@@ -159,6 +161,13 @@ class OpenstackCommand(PluginCommand):
 
             provider = OpenStack(arguments.CLOUD)
             elements = provider.vms()
+
+            if arguments.user is not None:
+                found = {}
+                for element in elements:
+                    if elements[element]['extra']['userId'] == arguments.user:
+                        found[element] = elements[element]
+                elements = found
 
             try:
                 fd = flatme(elements)
