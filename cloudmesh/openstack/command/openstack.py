@@ -1,24 +1,35 @@
 from __future__ import print_function
-from cloudmesh.shell.command import command
-from cloudmesh.shell.command import PluginCommand
-from ruamel import yaml
-from cloudmesh.common.util import path_expand
-from cloudmesh.common.util import readfile
-from cloudmesh.common.Printer import Printer
+
 from collections import OrderedDict
-from cloudmesh.common.default import Default
-from cloudmesh.common.FlatDict import FlatDict2
-from cloudmesh.common.FlatDict import flatten, flatme
-from cloudmesh.openstack.api import OpenStack
-from cloudmesh.common.error import Error
+from pprint import pprint
+
 import humanize
 import timestring
-import requests
+# noinspection PyUnresolvedReferences
+from cloudmesh.common.FlatDict import FlatDict2
+# noinspection PyUnresolvedReferences
+from cloudmesh.common.FlatDict import flatten, flatme
+# noinspection PyUnresolvedReferences
+from cloudmesh.common.Printer import Printer
+# noinspection PyUnresolvedReferences
+from cloudmesh.common.default import Default
+# noinspection PyUnresolvedReferences
+from cloudmesh.common.error import Error
+# noinspection PyUnresolvedReferences
+from cloudmesh.common.util import path_expand
+# noinspection PyUnresolvedReferences
+from cloudmesh.common.util import readfile
+# noinspection PyUnresolvedReferences
+from cloudmesh.shell.command import PluginCommand
+# noinspection PyUnresolvedReferences
+from cloudmesh.shell.command import command
+from ruamel import yaml
 
-from pprint import pprint
+from cloudmesh.openstack.api import OpenStack
 
 
 class OpenstackCommand(PluginCommand):
+    # noinspection PyUnusedLocal
     @command
     def do_openstack(self, args, arguments):
         """
@@ -87,7 +98,6 @@ class OpenstackCommand(PluginCommand):
                 clouds = d["cloudmesh"]["clouds"]
                 print(yaml.dump(clouds[cloud], indent=4, Dumper=yaml.RoundTripDumper))
 
-
         elif arguments.yaml:
 
             filename = path_expand("~/.cloudmesh/cloudmesh.yaml")
@@ -125,8 +135,6 @@ class OpenstackCommand(PluginCommand):
             else:
                 print(Printer.dict(images, output=arguments.format))
 
-
-
         elif arguments.flavor and arguments.list:
 
             if arguments.CLOUD is None:
@@ -141,8 +149,6 @@ class OpenstackCommand(PluginCommand):
                                sort_keys="id",
                                output=arguments.format,
                                order=['id', 'name', 'ram', 'vcpus', 'disk']))
-
-
 
         elif arguments.vm and arguments.list:
 

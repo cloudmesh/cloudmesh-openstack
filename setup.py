@@ -28,6 +28,7 @@ requiers = """
 humanize
 apache-libcloud
 timestring
+requests
 psutil
 pygments
 tox

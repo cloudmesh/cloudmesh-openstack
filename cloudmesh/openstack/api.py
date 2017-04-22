@@ -1,30 +1,32 @@
 from __future__ import print_function
-from ruamel import yaml
-from cloudmesh.common.util import path_expand
-from cloudmesh.common.util import readfile
-from collections import OrderedDict
 
-from cloudmesh.common.default import Default
-from cloudmesh.common.dotdict import dotdict
-
-from cloudmesh.common.config import Config
-from cloudmesh.common.error import Error
-
-from libcloud.compute.types import Provider
-from libcloud.compute.providers import get_driver
-
-import libcloud.security
 import warnings
-import libcloud
-import requests
 
-from pprint import pprint
+import libcloud
+import libcloud.security
+import requests
+# noinspection PyUnresolvedReferences
+from cloudmesh.common.config import Config
+# noinspection PyUnresolvedReferences,PyUnresolvedReferences
+from cloudmesh.common.default import Default
+# noinspection PyUnresolvedReferences
+from cloudmesh.common.dotdict import dotdict
+# noinspection PyUnresolvedReferences
+from cloudmesh.common.error import Error
+# noinspection PyUnresolvedReferences,PyUnresolvedReferences
+from cloudmesh.common.util import path_expand
+# noinspection PyUnresolvedReferences
+from cloudmesh.common.util import readfile
+from libcloud.compute.providers import get_driver
+from libcloud.compute.types import Provider
+from ruamel import yaml
 
 warnings.simplefilter("ignore")
-#warnings.warn(libcloud.security.VERIFY_SSL_DISABLED_MSG)
+
+
+# warnings.warn(libcloud.security.VERIFY_SSL_DISABLED_MSG)
 
 class OpenStack(object):
-
     def __init__(self, cloud=None):
 
         if cloud is None:
@@ -70,24 +72,23 @@ class OpenStack(object):
         except Exception as e:
             Error.traceback(error=e, debug=True, trace=True)
 
-
     def _list(self, data):
-         d = {}
+        d = {}
 
-         for image in data:
-             # print (image.__dict__)
-             d[image.name] = image.__dict__
-             del d[image.name]["_uuid"]
-             del d[image.name]["driver"]
+        for image in data:
+            # print (image.__dict__)
+            d[image.name] = image.__dict__
+            del d[image.name]["_uuid"]
+            del d[image.name]["driver"]
 
-         return d
+        return d
 
     def information(self):
-        print ("LLL")
-        print (self.credentials.OS_AUTH_URL)
+        print("LLL")
+        print(self.credentials.OS_AUTH_URL)
 
         r = requests.get(self.credentials.OS_AUTH_URL)
-        print (r.json())
+        print(r.json())
 
         print(yaml.dump(r.json(), indent=4, Dumper=yaml.RoundTripDumper))
 
@@ -100,11 +101,10 @@ class OpenStack(object):
         return None
 
     def images(self):
-         return (self._list(self.driver.list_images()))
-
+        return self._list(self.driver.list_images())
 
     def flavors(self):
-         return (self._list(self.driver.list_sizes()))
+        return self._list(self.driver.list_sizes())
 
     def vms(self):
-         return (self._list(self.driver.list_nodes()))
+        return self._list(self.driver.list_nodes())
