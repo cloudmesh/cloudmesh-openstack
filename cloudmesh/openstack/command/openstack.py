@@ -41,7 +41,7 @@ class OpenstackCommand(PluginCommand):
                 openstack yaml list [CLOUD] 
                 openstack image list [CLOUD] [--format=FORMAT]
                 openstack flavor list [CLOUD] [--format=FORMAT]
-                openstack vm list [CLOUD] [--user=USER] [--format=FORMAT] 
+                openstack vm list [CLOUD] [--user=USER] [--format=FORMAT] [--ip=public|private]
 
           This command does some useful things.
 
@@ -178,7 +178,7 @@ class OpenstackCommand(PluginCommand):
                      'extra__metadata__group', "extra__userId", "extra__created", 'private_ips', 'public_ips']
             header = ["name", "state", "image", "flavor", "key", "group", "user", "created", "private", "public"]
 
-            if arguments.format == "table":
+            if arguments.format == "table" or arguments.format == "inventory":
 
                 for element in fd:
                     fd[element]['private_ips'] = ','.join(fd[element]['private_ips'])
@@ -186,15 +186,39 @@ class OpenstackCommand(PluginCommand):
                     # fd[element]["extra__created"] = humanize.timedelta(fd[element]["extra__created"])
                     t = humanize.naturaltime(timestring.Date(fd[element]["extra__created"]).date)
                     fd[element]["extra__created"] = t
-                print(arguments.CLOUD)
-                print(Printer.dict(fd,
+
+                if arguments["--ip"]:
+
+                    kind = arguments["--ip"]
+
+                    ips = {}
+                    for element in fd:
+                        ips[element] = {
+                            'name': fd[element]['name'],
+                            kind: fd[element][kind + '_ips']
+                        }
+                    if arguments.format == 'inventory':
+                        # print ("[hosts]")
+                        for host in ips:
+                            print (ips[host][kind])
+                    else:
+                        print(Printer.dict(ips,
                                    # sort_keys=True,
-                                   order=order,
-                                   header=header,
+                                   order=["name", kind],
                                    output=arguments.format))
-            # elif arguments.format == "dict":
-            #    print(yaml.dump(images, indent=4, Dumper=yaml.RoundTripDumper))
+
+                else:
+                    print(arguments.CLOUD)
+                    print(Printer.dict(fd,
+                                       # sort_keys=True,
+                                       order=order,
+                                       header=header,
+                                       output=arguments.format))
+                # elif arguments.format == "dict":
+                #    print(yaml.dump(images, indent=4, Dumper=yaml.RoundTripDumper))
             elif arguments.format == 'flatten':
                 pprint(fd)
             else:
                 print(Printer.dict(elements, output=arguments.format))
+
+            return ""
