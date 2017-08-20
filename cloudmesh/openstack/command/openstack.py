@@ -61,6 +61,8 @@ class OpenstackCommand(PluginCommand):
 
         arguments.user = arguments["--user"]
 
+        fd = None
+
         if arguments.info:
 
             if arguments.CLOUD is None:
@@ -200,12 +202,12 @@ class OpenstackCommand(PluginCommand):
                     if arguments.format == 'inventory':
                         # print ("[hosts]")
                         for host in ips:
-                            print (ips[host][kind])
+                            print(ips[host][kind])
                     else:
                         print(Printer.dict(ips,
-                                   # sort_keys=True,
-                                   order=["name", kind],
-                                   output=arguments.format))
+                                           # sort_keys=True,
+                                           order=["name", kind],
+                                           output=arguments.format))
 
                 else:
                     print(arguments.CLOUD)
@@ -214,8 +216,8 @@ class OpenstackCommand(PluginCommand):
                                        order=order,
                                        header=header,
                                        output=arguments.format))
-                # elif arguments.format == "dict":
-                #    print(yaml.dump(images, indent=4, Dumper=yaml.RoundTripDumper))
+                    # elif arguments.format == "dict":
+                    #    print(yaml.dump(images, indent=4, Dumper=yaml.RoundTripDumper))
             elif arguments.format == 'flatten':
                 pprint(fd)
             else:

@@ -34,6 +34,7 @@ class OpenStack(object):
             cloud = default["global"]["cloud"]
             default.close()
 
+        self.credentials = None
         self.info = Config().cloud(cloud)
 
         # print(yaml.dump(self.info, indent=4, Dumper=yaml.RoundTripDumper))
