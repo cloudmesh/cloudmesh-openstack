@@ -15,6 +15,7 @@ from cloudmesh.common.util import path_expand
 from cloudmesh.common.util import readfile
 from cloudmesh.shell.command import PluginCommand
 from cloudmesh.shell.command import command
+from cloudmesh.configuration.Config import Config
 
 from ruamel import yaml
 
@@ -29,198 +30,62 @@ class OpenstackCommand(PluginCommand):
         ::
 
           Usage:
-                openstack info
-                openstack yaml 
-                openstack yaml list [CLOUD] 
-                openstack image list [CLOUD] [--format=FORMAT]
-                openstack flavor list [CLOUD] [--format=FORMAT]
-                openstack vm list [CLOUD] [--user=USER] [--format=FORMAT] [--ip=public|private]
+                openstack list [--details]
+                openstack [CLOUD] [--details]
 
           This command does some useful things.
 
           Arguments:
-              FILE   a file name
-            
-          Options:
-              -f      specify the file
+              CLOUD   name of the cloud
 
+          Description:
+              Prints the configuration file specification of openstack clouds
+              If details is specified it also printsthe secrets, so please do
+              use it carefully
+
+              openstack list [--details]
+              openstack [CLOUD]
+
+              NOTE: this command will be replaced with
+
+              cms config list --kind=openstack --details
+              cms config CLOUD --details
+
+              The command is temporarily introduced for testing purposes
         """
-        # print(arguments)
-
-        Console.error("The openstack command is deprecated.")
-        print()
-        Console.error("    Please use the vm, size, flavor commands instead")
-        print()
-        return ""
-
 
         variables = Variables()
         cloud = arguments.CLOUD or variables["cloud"]
+        config = Config()
 
-        arguments.format = arguments["--format"] or 'table'
+        def Print(entry):
+            place = {
+                "cloudmesh": {
+                    "cloud": entry
+                }
+            }
+            print(Config.cat_dict(place, mask_secrets=not arguments["--details"]))
 
-        arguments.user = arguments["--user"]
+        def list():
+            clouds = config[f"cloudmesh.cloud"]
+            for key, entry in clouds.items():
+                if entry["cm"]["kind"] == 'openstack':
+                    Print(entry)
 
-        fd = None
-
-        if arguments.info:
-
-            if arguments.CLOUD is None:
-                arguments.CLOUD = cloud
-
-            provider = Provider(arguments.CLOUD)
-            provider.information()
-
-        elif arguments.yaml and arguments.list:
-
-            filename = path_expand("~/.cloudmesh/cloudmesh.yaml")
-            content = readfile(filename)
-            d = yaml.load(content, Loader=yaml.RoundTripLoader)
-            if arguments.CLOUD is None:
-                default_cloud = variables["cloud"]
-
-                # print (yaml.dump(d, indent=4, Dumper=yaml.RoundTripDumper))
-                info = OrderedDict()
-                clouds = d["cloudmesh"]["clouds"]
-                for cloud in clouds:
-                    info[cloud] = {
-                        "default": "",
-                        "name": cloud,
-                        "type": clouds[cloud]["cm_type"],
-                        "label": clouds[cloud]["cm_label"],
-                        "flavor": clouds[cloud]["default"]["flavor"],
-                        "image": clouds[cloud]["default"]["image"]
-                    }
-                    if default_cloud == cloud:
-                        info[cloud]["default"] = "*"
-
-                print(Printer.dict(info,
-                                   order=["default", "name", "type", "label", "flavor", "image"]))
-
+        if arguments.list:
+            list()
+        elif cloud:
+            entry = config[f"cloudmesh.cloud.{cloud}"]
+            if entry["cm"]["kind"] == "openstack":
+                Print(entry)
             else:
-                cloud = arguments.CLOUD
-                clouds = d["cloudmesh"]["clouds"]
-                print(yaml.dump(clouds[cloud], indent=4, Dumper=yaml.RoundTripDumper))
+                Console.error("The cloud {cloud} is not registered as an openstack cloud")
+                return ""
 
-        elif arguments.yaml:
+        else:
+            list()
 
-            filename = path_expand("~/.cloudmesh/cloudmesh.yaml")
-            content = readfile(filename)
-            d = yaml.load(content, Loader=yaml.RoundTripLoader)
-            print(yaml.dump(d, indent=4, Dumper=yaml.RoundTripDumper))
 
-        elif arguments.image and arguments.list:
 
-            if arguments.CLOUD is None:
-                arguments.CLOUD = cloud
 
-            # print (arguments.CLOUD)
-
-            provider = Provider(arguments.CLOUD)
-            images = provider.images()
-
-            try:
-                fd = flatme(images)
-            except Exception as e:
-                Error.traceback(error=e, debug=True, trace=True)
-
-            order = ["name", "extra__metadata__user_id", "extra__metadata__image_state", "extra__updated"]
-            header = ["name", "user", "state", "updated"]
-
-            if arguments.format == "table":
-                print(arguments.CLOUD)
-                print(Printer.dict(fd,
-                                   sort_keys="name",
-                                   order=order,
-                                   header=header,
-                                   output=arguments.format))
-            # elif arguments.format == "dict":
-            #    print(yaml.dump(images, indent=4, Dumper=yaml.RoundTripDumper))
-            else:
-                print(Printer.dict(images, output=arguments.format))
-
-        elif arguments.flavor and arguments.list:
-
-            if arguments.CLOUD is None:
-                arguments.CLOUD = cloud
-
-            # print (arguments.CLOUD)
-
-            provider = Provider(arguments.CLOUD)
-            d = provider.flavors()
-            print(arguments.CLOUD)
-            print(Printer.dict(d,
-                               sort_keys="id",
-                               output=arguments.format,
-                               order=['id', 'name', 'ram', 'vcpus', 'disk']))
-
-        elif arguments.vm and arguments.list:
-
-            if arguments.CLOUD is None:
-                arguments.CLOUD = cloud
-
-            # print (arguments.CLOUD)
-
-            provider = Provider(arguments.CLOUD)
-            elements = provider.vms()
-
-            if arguments.user is not None:
-                found = {}
-                for element in elements:
-                    if elements[element]['extra']['userId'] == arguments.user:
-                        found[element] = elements[element]
-                elements = found
-
-            try:
-                fd = flatme(elements)
-            except Exception as e:
-                Error.traceback(error=e, debug=True, trace=True)
-
-            order = ["name", 'extra__vm_state', 'extra__metadata__image', 'extra__metadata__flavor', "extra__key_name",
-                     'extra__metadata__group', "extra__userId", "extra__created", 'private_ips', 'public_ips']
-            header = ["name", "state", "image", "flavor", "key", "group", "user", "created", "private", "public"]
-
-            if arguments.format == "table" or arguments.format == "inventory":
-
-                for element in fd:
-                    fd[element]['private_ips'] = ','.join(fd[element]['private_ips'])
-                    fd[element]['public_ips'] = ','.join(fd[element]['public_ips'])
-                    # fd[element]["extra__created"] = humanize.timedelta(fd[element]["extra__created"])
-                    t = humanize.naturaltime(timestring.Date(fd[element]["extra__created"]).date)
-                    fd[element]["extra__created"] = t
-
-                if arguments["--ip"]:
-
-                    kind = arguments["--ip"]
-
-                    ips = {}
-                    for element in fd:
-                        ips[element] = {
-                            'name': fd[element]['name'],
-                            kind: fd[element][kind + '_ips']
-                        }
-                    if arguments.format == 'inventory':
-                        # print ("[hosts]")
-                        for host in ips:
-                            print(ips[host][kind])
-                    else:
-                        print(Printer.dict(ips,
-                                           # sort_keys=True,
-                                           order=["name", kind],
-                                           output=arguments.format))
-
-                else:
-                    print(arguments.CLOUD)
-                    print(Printer.dict(fd,
-                                       # sort_keys=True,
-                                       order=order,
-                                       header=header,
-                                       output=arguments.format))
-                    # elif arguments.format == "dict":
-                    #    print(yaml.dump(images, indent=4, Dumper=yaml.RoundTripDumper))
-            elif arguments.format == 'flatten':
-                pprint(fd)
-            else:
-                print(Printer.dict(elements, output=arguments.format))
-
-            return ""
+        return ""
