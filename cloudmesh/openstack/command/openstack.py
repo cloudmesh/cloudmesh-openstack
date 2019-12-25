@@ -5,27 +5,20 @@ from pprint import pprint
 
 import humanize
 import timestring
-# noinspection PyUnresolvedReferences
 from cloudmesh.common.FlatDict import FlatDict2
-# noinspection PyUnresolvedReferences
 from cloudmesh.common.FlatDict import flatten, flatme
-# noinspection PyUnresolvedReferences
 from cloudmesh.common.Printer import Printer
-# noinspection PyUnresolvedReferences
-from cloudmesh.common.default import Default
-# noinspection PyUnresolvedReferences
+from cloudmesh.common.console import Console
+from cloudmesh.common.variables import Variables
 from cloudmesh.common.error import Error
-# noinspection PyUnresolvedReferences
 from cloudmesh.common.util import path_expand
-# noinspection PyUnresolvedReferences
 from cloudmesh.common.util import readfile
-# noinspection PyUnresolvedReferences
 from cloudmesh.shell.command import PluginCommand
-# noinspection PyUnresolvedReferences
 from cloudmesh.shell.command import command
+
 from ruamel import yaml
 
-from cloudmesh.openstack.api import OpenStack
+from cloudmesh.openstack.compute.Provider import Provider
 
 
 class OpenstackCommand(PluginCommand):
@@ -54,9 +47,16 @@ class OpenstackCommand(PluginCommand):
         """
         # print(arguments)
 
-        default = Default()
-        cloud = arguments.CLOUD or default["global"]["cloud"]
-        default.close()
+        Console.error("The openstack command is deprecated.")
+        print()
+        Console.error("    Please use the vm, size, flavor commands instead")
+        print()
+        return ""
+
+
+        variables = Variables()
+        cloud = arguments.CLOUD or variables["cloud"]
+
         arguments.format = arguments["--format"] or 'table'
 
         arguments.user = arguments["--user"]
@@ -68,7 +68,7 @@ class OpenstackCommand(PluginCommand):
             if arguments.CLOUD is None:
                 arguments.CLOUD = cloud
 
-            provider = OpenStack(arguments.CLOUD)
+            provider = Provider(arguments.CLOUD)
             provider.information()
 
         elif arguments.yaml and arguments.list:
@@ -77,7 +77,7 @@ class OpenstackCommand(PluginCommand):
             content = readfile(filename)
             d = yaml.load(content, Loader=yaml.RoundTripLoader)
             if arguments.CLOUD is None:
-                default_cloud = default["global"]["cloud"]
+                default_cloud = variables["cloud"]
 
                 # print (yaml.dump(d, indent=4, Dumper=yaml.RoundTripDumper))
                 info = OrderedDict()
@@ -116,7 +116,7 @@ class OpenstackCommand(PluginCommand):
 
             # print (arguments.CLOUD)
 
-            provider = OpenStack(arguments.CLOUD)
+            provider = Provider(arguments.CLOUD)
             images = provider.images()
 
             try:
@@ -146,7 +146,7 @@ class OpenstackCommand(PluginCommand):
 
             # print (arguments.CLOUD)
 
-            provider = OpenStack(arguments.CLOUD)
+            provider = Provider(arguments.CLOUD)
             d = provider.flavors()
             print(arguments.CLOUD)
             print(Printer.dict(d,
@@ -161,7 +161,7 @@ class OpenstackCommand(PluginCommand):
 
             # print (arguments.CLOUD)
 
-            provider = OpenStack(arguments.CLOUD)
+            provider = Provider(arguments.CLOUD)
             elements = provider.vms()
 
             if arguments.user is not None:

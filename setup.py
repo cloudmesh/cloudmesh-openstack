@@ -32,6 +32,7 @@ cloudmesh-configuration
 cloudmesh-cmd5
 cloudmesh-sys
 cloudmesh-inventory
+timestring
 openstacksdk
 """.split("\n")
 
