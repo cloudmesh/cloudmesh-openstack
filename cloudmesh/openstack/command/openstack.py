@@ -1,25 +1,10 @@
 from __future__ import print_function
 
-from collections import OrderedDict
-from pprint import pprint
-
-import humanize
-import timestring
-from cloudmesh.common.FlatDict import FlatDict2
-from cloudmesh.common.FlatDict import flatten, flatme
-from cloudmesh.common.Printer import Printer
 from cloudmesh.common.console import Console
 from cloudmesh.common.variables import Variables
-from cloudmesh.common.error import Error
-from cloudmesh.common.util import path_expand
-from cloudmesh.common.util import readfile
+from cloudmesh.configuration.Config import Config
 from cloudmesh.shell.command import PluginCommand
 from cloudmesh.shell.command import command
-from cloudmesh.configuration.Config import Config
-
-from ruamel import yaml
-
-from cloudmesh.openstack.compute.Provider import Provider
 
 
 class OpenstackCommand(PluginCommand):

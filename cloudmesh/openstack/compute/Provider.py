@@ -1,27 +1,25 @@
+import ctypes
 import os
 import subprocess
 from ast import literal_eval
-from time import sleep
 from sys import platform
-import ctypes
+from time import sleep
 
 import openstack
 from cloudmesh.abstractclass.ComputeNodeABC import ComputeNodeABC
+from cloudmesh.common.DateTime import DateTime
+from cloudmesh.common.DictList import DictList
 from cloudmesh.common.Printer import Printer
 from cloudmesh.common.console import Console
 from cloudmesh.common.parameter import Parameter
 from cloudmesh.common.util import banner
 from cloudmesh.common.util import path_expand
 from cloudmesh.common.variables import Variables
-from cloudmesh.common.DictList import DictList
 from cloudmesh.configuration.Config import Config
 from cloudmesh.image.Image import Image
 from cloudmesh.mongo.CmDatabase import CmDatabase
 from cloudmesh.provider import ComputeProviderPlugin
 from cloudmesh.secgroup.Secgroup import Secgroup, SecgroupRule
-from cloudmesh.common.DateTime import DateTime
-from cloudmesh.common.debug import VERBOSE
-from cloudmesh.image.Image import Image
 
 
 class Provider(ComputeNodeABC, ComputeProviderPlugin):
