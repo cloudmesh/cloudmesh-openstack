@@ -25,7 +25,7 @@ class OpenstackCommand(PluginCommand):
 
           Description:
               Prints the configuration file specification of openstack clouds
-              If details is specified it also printsthe secrets, so please do
+              If details is specified it also prints the secrets, so please do
               use it carefully
 
               openstack list [--details]
@@ -43,34 +43,35 @@ class OpenstackCommand(PluginCommand):
         cloud = arguments.CLOUD or variables["cloud"]
         config = Config()
 
+        # noinspection PyPep8Naming
         def Print(entry):
             place = {
                 "cloudmesh": {
                     "cloud": entry
                 }
             }
-            print(Config.cat_dict(place, mask_secrets=not arguments["--details"]))
+            print(
+                Config.cat_dict(place,
+                                mask_secrets=not arguments["--details"]))
 
-        def list():
+        def list_openstack_entries():
             clouds = config[f"cloudmesh.cloud"]
             for key, entry in clouds.items():
                 if entry["cm"]["kind"] == 'openstack':
                     Print(entry)
 
         if arguments.list:
-            list()
+            list_openstack_entries()
         elif cloud:
             entry = config[f"cloudmesh.cloud.{cloud}"]
             if entry["cm"]["kind"] == "openstack":
                 Print(entry)
             else:
-                Console.error("The cloud {cloud} is not registered as an openstack cloud")
+                Console.error("The cloud {cloud} is not registered "
+                              "as an openstack cloud")
                 return ""
 
         else:
-            list()
-
-
-
+            list_openstack_entries()
 
         return ""
