@@ -5,12 +5,7 @@
 from pprint import pprint
 
 import openstack
-from cloudmesh.common.util import banner
 from cloudmesh.configuration.Config import Config
-import os
-from cloudmesh.management.configuration.name import Name
-from cloudmesh.common.debug import VERBOSE
-import sys
 
 """
 see : https://docs.openstack.org/openstacksdk/latest/user/guides/compute.html

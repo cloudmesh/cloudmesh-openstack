@@ -207,7 +207,8 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
 
         if output == "table":
             if kind == "secrule":
-                # this is just a temporary fix, both in sec.py and here the secgruops and secrules should be separated
+                # this is just a temporary fix, both in sec.py and
+                # here the secgruops and secrules should be separated
                 result = []
                 for group in data:
                     # for rule in group['security_group_rules']:
@@ -1015,7 +1016,6 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
             Console.error("Problem starting vm in time.")
             raise TimeoutError
 
-
         except Exception as e:
             Console.error("Problem starting vm", traceflag=True)
             print(e)
@@ -1231,7 +1231,8 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
         if timeout is None:
             timeout = 360
         Console.info(
-            f"waiting for instance {name} to be reachable: Interval: {interval}, Timeout: {timeout}")
+            f"waiting for instance {name} to be reachable: Interval: "
+            "{interval}, Timeout: {timeout}")
         timer = 0
         while timer < timeout:
             sleep(interval)
