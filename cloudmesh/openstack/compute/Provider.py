@@ -4,8 +4,11 @@ import subprocess
 from ast import literal_eval
 from sys import platform
 from time import sleep
+from pprint import pprint
+import sys
 
 import openstack
+
 from cloudmesh.abstractclass.ComputeNodeABC import ComputeNodeABC
 from cloudmesh.common.DateTime import DateTime
 from cloudmesh.common.DictList import DictList
@@ -35,20 +38,20 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
             host: TBD
             label: {name}
             kind: openstack
-            version: liberty
+            version: TBD
             service: compute
           credentials:
-            OS_AUTH_URL: https://{uri}:5000/v2.0
-            OS_USERNAME: TBD
-            OS_PASSWORD: TBD
-            OS_TENANT_NAME: {tenant}
-            OS_TENANT_ID: {tenant}
-            OS_PROJECT_NAME: {tenant}
-            OS_PROJECT_DOMAIN_ID: default
-            OS_USER_DOMAIN_ID: default
-            OS_VERSION: kilo
-            OS_REGION_NAME: {region}
-            OS_KEY_PATH: ~/.ssh/id_rsa.pub
+            auth:
+              auth_url: "https://kvm.tacc.chameleoncloud.org:5000/v3"
+              username: TBD
+              project_id: {project_id}
+              project_name: {project_name}
+              user_domain_name: "Default"
+              password: TBD
+            region_name: {region}
+            interface: "public"
+            identity_api_version: "3"
+            key_path: ~/.ssh/id_rsa.pub
           default:
             size: m1.medium
             image: CC-Ubuntu18.04
@@ -231,28 +234,6 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
         else:
             print(Printer.write(data, output=output))
 
-    @staticmethod
-    def _get_credentials(config):
-        """
-        Internal function to create a dict for the openstacksdk credentials.
-
-        :param config: The credentials from the cloudmesh yaml file
-        :return: the dict for the openstacksdk
-        """
-
-        d = {'version': '2', 'username': config['OS_USERNAME'],
-             'password': config['OS_PASSWORD'],
-             'auth_url': config['OS_AUTH_URL'],
-
-             'region_name': config['OS_REGION_NAME'],
-             }
-        if 'OS_TENANT_ID' in config:
-            d['tenant_id'] = config['OS_TENANT_ID']
-        if 'OS_TENANT_NAME' in config:
-            d['project_id'] = config['OS_TENANT_NAME']
-        # d['project_domain_name'] = config['OS_PROJECT_NAME']
-        return d
-
     def __init__(self, name=None, configuration="~/.cloudmesh/cloudmesh.yaml"):
         """
         Initializes the provider. The default parameters are read from the
@@ -273,11 +254,11 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
         self.cloudtype = self.spec["cm"]["kind"]
 
         self.cred = self.spec["credentials"]
-        if self.cred["OS_PASSWORD"] == 'TBD':
-            Console.error(f"The password TBD is not allowed in cloud {name}")
-        self.credential = self._get_credentials(self.cred)
+        self.project_id = self.cred["auth"]["project_id"]
 
-        self.cloudman = openstack.connect(**self.credential)
+        # pprint(self.cred)
+
+        self.cloudman = openstack.connection.Connection(**self.cred)
 
         # self.default_image = deft["image"]
         # self.default_size = deft["size"]
@@ -295,7 +276,7 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
 
     def update_dict(self, elements, kind=None):
         """
-        THis function adds a cloudmesh cm dict to each dict in the list
+        This function adds a cloudmesh cm dict to each dict in the list
         elements.
         Libcloud
         returns an object or list of objects With the dict method
@@ -343,6 +324,10 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
             elif kind == 'vm':
 
                 entry["cm"]["updated"] = str(DateTime.now())
+
+                if 'public_v4' in entry:
+                    entry['ip_public'] = entry['public_v4']
+
                 if "created_at" in entry:
                     entry["cm"]["created"] = str(entry["created_at"])
                     # del entry["created_at"]
@@ -429,6 +414,10 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
         """
         groups = self.cloudman.network.security_groups()
 
+        # print ("TTTTT")
+        # for g in groups:
+        #     pprint(g)
+
         if name is not None:
             for entry in groups:
 
@@ -451,17 +440,19 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
 
     def add_secgroup(self, name=None, description=None):
         """
-        Adds the
+        Adds the security group with the given name
         :param name: Name of the group
         :param description: The description
         :return:
         """
+        # print ("UUUU")
         if self.cloudman:
             if description is None:
                 description = name
             try:
-                self.cloudman.create_security_group(name,
-                                                    description)
+                self.cloudman.network.create_security_group(
+                    name=name,
+                    description=description)
             except:
                 Console.warning(f"secgroup {name} already exists in cloud. "
                                 f"skipping.")
@@ -476,6 +467,7 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
         """
         Adds the
         :param name: Name of the group
+        :param port: The port number
         :param description: The description
         :return:
         """
@@ -486,17 +478,20 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
                 portmin = None
                 portmax = None
 
-            self.cloudman.create_security_group_rule(
-                name,
-                port_range_min=portmin,
-                port_range_max=portmax,
-                protocol=protocol,
-                remote_ip_prefix=ip_range,
-                remote_group_id=None,
-                direction='ingress',
-                ethertype='IPv4',
-                project_id=None)
+            sec_group = self.cloudman.network.find_security_group(
+                name_or_id=name)
 
+            try:
+                rule = self.cloudman.network.create_security_group_rule(
+                    security_group_id=sec_group.id,
+                    direction='ingress',
+                    remote_ip_prefix='0.0.0.0/0',
+                    protocol=protocol,
+                    port_range_max=portmax,
+                    port_range_min=portmin,
+                    ethertype='IPv4')
+            except:
+                pass
         else:
             raise ValueError("cloud not initialized")
 
@@ -508,34 +503,47 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
         :return:
         """
         if self.cloudman:
-            self.cloudman.delete_security_group(name)
+            self.cloudman.network.delete_security_group(name)
             g = self.list_secgroups(name=name)
             return len(g) == 0
         else:
             raise ValueError("cloud not initialized")
 
     def upload_secgroup(self, name=None):
+        """
+        upload or update the security group with the given name
+        The group will have a number of rules.
 
-        cgroups = self.list_secgroups(name)
-        group_exists = False
-        if len(cgroups) > 0:
-            print("Warning group already exists")
-            group_exists = True
+        :param name: name of the security group
+        :return:
+        """
+
+        if name is None:
+            groups = Secgroup().list()
+            for group in groups:
+                print("upload group:", group['name'])
+                self.upload_secgroup(name=group['name'])
+            return
 
         groups = Secgroup().list()
+
+        if name is not None:
+            for group in groups:
+                if group['name'] == name:
+                    break
+
         rules = SecgroupRule().list()
 
-        # pprint (rules)
         data = {}
         for rule in rules:
             data[rule['name']] = rule
 
-        # pprint (groups)
+        sgroups = self.list_secgroups(name)
 
-        for group in groups:
-            if group['name'] == name:
-                break
-        print("upload group:", name)
+        group_exists = False
+        if len(sgroups) > 0:
+            print("     Warning group already exists")
+            group_exists = True
 
         if not group_exists:
             self.add_secgroup(name=name, description=group['description'])
@@ -824,7 +832,10 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
 
         :return: dict of vms
         """
-        servers = self.get_list(self.cloudman.compute.servers(), kind="vm")
+
+        s = self.cloudman.list_servers()
+
+        servers = self.get_list(self.cloudman.list_servers(), kind="vm")
 
         result = []
         for server in servers:
@@ -899,6 +910,7 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
     def create(self,
                name=None,
                image=None,
+               network=None,
                size=None,
                location=None,
                timeout=360,
@@ -939,6 +951,9 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
         if 'flavor' in kwargs and size is None:
             size = kwargs['flavor']
 
+        if 'network' in kwargs and network is None:
+            network = kwargs['network']
+
         # Guess user name
 
         if user is None:
@@ -967,11 +982,13 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
             groups = Parameter.expand(group)
 
         banner("Create Server")
+        Console.msg(f"    Cloud:    {self.cloud}")
         Console.msg(f"    Name:     {name}")
         Console.msg(f"    User:     {user}")
         Console.msg(f"    IP:       {ip}")
         Console.msg(f"    Image:    {image}")
         Console.msg(f"    Size:     {size}")
+        Console.msg(f"    Network:  {network}")
         Console.msg(f"    Public:   {public}")
         Console.msg(f"    Key:      {key}")
         Console.msg(f"    Location: {location}")
@@ -981,8 +998,13 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
         Console.msg(f"    Groups:   {groups}")
         Console.msg("")
 
+        # image = self.cloudman.compute.find_image(image)
+        # flavor = self.cloudman.compute.find_flavor(size)
+        # network = self.cloudman.network.find_network(network)
+
         try:
             server = self.cloudman.create_server(name,
+                                                 network=network,
                                                  flavor=size,
                                                  image=image,
                                                  key_name=key,
@@ -991,6 +1013,20 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
                                                  # tags=groups,
                                                  # wait=True
                                                  )
+
+            """
+            server = self.cloudman.create_server(name,
+                                                 networks=[
+                                                     {"uuid": "0fa8824d-8a3f-4890-90e1-c3596b3511c6"}],
+                                                 flavor=size,
+                                                 image=image,
+                                                 key_name=key,
+                                                 security_groups=[secgroup],
+                                                 timeout=timeout
+                                                 # tags=groups,
+                                                 # wait=True
+                                                 )
+            """
             server['user'] = user
             r = self.cloudman.wait_for_server(server)
             s = self.cloudman.add_ips_to_server(server, ips=ip)
@@ -1139,9 +1175,16 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
 
         # VERBOSE(vm)
 
+        # metadata = eval(vm['metadata'])
+        metadata = vm['metadata']
+
         ip = vm['ip_public']
         key_name = vm['key_name']
-        image = vm['metadata']['image']
+
+        # if type(metadata['image']) == str:
+        #    metadata['image'] = eval(metadata['image'])
+
+        image = metadata['image']
         user = Image.guess_username(image)
 
         cm = CmDatabase()
