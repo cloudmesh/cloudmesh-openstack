@@ -5,7 +5,7 @@ from cloudmesh.common.variables import Variables
 from cloudmesh.configuration.Config import Config
 from cloudmesh.shell.command import PluginCommand
 from cloudmesh.shell.command import command
-
+from cloudmesh.common.Printer import Printer
 
 class OpenstackCommand(PluginCommand):
     # noinspection PyUnusedLocal
@@ -61,7 +61,10 @@ class OpenstackCommand(PluginCommand):
                     Print(entry)
 
         if arguments.list:
-            list_openstack_entries()
+            images = list_openstack_entries()
+
+
+
         elif cloud:
             entry = config[f"cloudmesh.cloud.{cloud}"]
             if entry["cm"]["kind"] == "openstack":
