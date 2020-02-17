@@ -105,10 +105,8 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
                       "metadata.flavor",
                       "ip_public",
                       "ip_private",
-                      "project_id",
                       "cm.creation_time",
-                      "launched_at",
-                      "cm.kind"],
+                      "launched_at"],
             "header": ["Name",
                        "Cloud",
                        "State",
@@ -118,10 +116,8 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
                        "Flavor",
                        "Public IPs",
                        "Private IPs",
-                       "Project ID",
                        "Creation time",
-                       "Started at",
-                       "Kind"],
+                       "Started at"],
             "humanize": ["launched_at"]
         },
         "image": {
