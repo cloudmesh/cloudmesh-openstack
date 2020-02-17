@@ -56,6 +56,7 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
             size: m1.medium
             image: CC-Ubuntu18.04
             username: TBD
+            network: {network_id}
         """
 
     vm_state = [
@@ -254,6 +255,7 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
         self.cloudtype = self.spec["cm"]["kind"]
 
         self.cred = self.spec["credentials"]
+        self.default = self.spec["default"]
         self.project_id = self.cred["auth"]["project_id"]
 
         # pprint(self.cred)
@@ -953,6 +955,9 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
 
         if 'network' in kwargs and network is None:
             network = kwargs['network']
+
+        elif 'network' in  self.default:
+            network = self.default['network']
 
         # Guess user name
 
