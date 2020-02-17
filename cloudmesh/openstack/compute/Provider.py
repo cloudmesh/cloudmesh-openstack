@@ -327,7 +327,7 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
                     entry['ip_public'] = entry['public_v4']
 
                 if "created_at" in entry:
-                    entry["cm"]["created"] = str(entry["created_at"])
+                    entry["cm"]["created"] = DateTime.utc(entry["created_at"])
                     # del entry["created_at"]
                     if 'status' in entry:
                         entry["cm"]["status"] = str(entry["status"])
