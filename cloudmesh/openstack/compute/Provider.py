@@ -953,9 +953,10 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
         if 'flavor' in kwargs and size is None:
             size = kwargs['flavor']
 
-        if 'network' in kwargs and network is None:
+        if network is not None:
+            pass
+        elif 'network' in kwargs:
             network = kwargs['network']
-
         elif 'network' in  self.default:
             network = self.default['network']
 
