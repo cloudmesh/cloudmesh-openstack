@@ -34,7 +34,7 @@ cloudmesh-sys
 cloudmesh-inventory
 timestring
 openstacksdk
-""".split("\n")
+""".splitlines()
 
 # dependency_links = ['http://github.com/nicolaiarocci/eve.git@develop']
 
