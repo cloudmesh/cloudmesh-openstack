@@ -9,7 +9,7 @@ import sys
 
 import openstack
 
-from cloudmesh.abstractclass.ComputeNodeABC import ComputeNodeABC
+from cloudmesh.abstract.ComputeNodeABC import ComputeNodeABC
 from cloudmesh.common.DateTime import DateTime
 from cloudmesh.common.DictList import DictList
 from cloudmesh.common.Printer import Printer
