@@ -106,7 +106,7 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
                       "metadata.flavor",
                       "ip_public",
                       "ip_private",
-                      "cm.create",
+                      "cm.creation",
                       "launched_at"],
             "header": ["Name",
                        "Cloud",
