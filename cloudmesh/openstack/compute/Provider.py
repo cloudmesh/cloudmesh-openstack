@@ -98,6 +98,7 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
             "sort_keys": ["cm.name"],
             "order": ["cm.name",
                       "cm.cloud",
+                      "cm.label",
                       "vm_state",
                       "status",
                       "task_state",
@@ -105,10 +106,11 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
                       "metadata.flavor",
                       "ip_public",
                       "ip_private",
-                      "cm.creation_time",
+                      "cm.create",
                       "launched_at"],
             "header": ["Name",
                        "Cloud",
+                       "Label",
                        "State",
                        "Status",
                        "Task",
@@ -920,6 +922,7 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
                group=None,
                metadata=None,
                cloud=None,
+               label=None,
                **kwargs):
         """
         creates a named node
@@ -983,9 +986,13 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
         if type(group) == str:
             groups = Parameter.expand(group)
 
+        vm_label = label or name
+
+
         banner("Create Server")
         Console.msg(f"    Cloud:    {self.cloud}")
         Console.msg(f"    Name:     {name}")
+        Console.msg(f"    Label:    {vm_label}")
         Console.msg(f"    User:     {user}")
         Console.msg(f"    IP:       {ip}")
         Console.msg(f"    Image:    {image}")
@@ -1039,6 +1046,7 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
 
             metadata['image'] = image
             metadata['flavor'] = size
+            metadata['label'] = vm_label
 
             self.cloudman.set_server_metadata(server, metadata)
 
