@@ -1044,6 +1044,13 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
             if metadata is None:
                 metadata = {}
 
+            #
+            # due to metadata limitation in openstack do not add the creation time
+            #
+
+            if 'created' in metadata:
+                del metadata['created']
+
             metadata['image'] = image
             metadata['flavor'] = size
             metadata['label'] = vm_label
