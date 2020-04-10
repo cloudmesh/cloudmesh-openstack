@@ -38,7 +38,7 @@ openstacksdk
 
 # dependency_links = ['http://github.com/nicolaiarocci/eve.git@develop']
 
-version = "4.3.7"
+version = "4.3.0"
 
 with open('README.md') as f:
     long_description = f.read()
