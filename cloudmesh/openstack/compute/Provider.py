@@ -243,7 +243,7 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
         """
 
         conf = Config()["cloudmesh"]
-        super().__init__(name, conf)
+        super().__init__(name)
 
         self.user = Config()["cloudmesh"]["profile"]["user"]
         self.spec = conf["cloud"][name]
