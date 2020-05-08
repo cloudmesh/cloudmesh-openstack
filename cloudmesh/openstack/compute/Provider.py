@@ -1061,8 +1061,8 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
                                                  )
             """
             server['user'] = user
-            r = self.cloudman.wait_for_server(server)
-            s = self.cloudman.add_ips_to_server(server, ips=ip)
+            server = self.cloudman.wait_for_server(server)
+            server = self.cloudman.add_ips_to_server(server, ips=ip)
             variables = Variables()
             variables['vm'] = name
             if metadata is None:
