@@ -898,6 +898,8 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
             else:
                 data.update(metadata['cm'])
         server = self.cloudman.get_server(name)
+
+
         self.cloudman.set_server_metadata(server, data)
 
     def get_server_metadata(self, name):
@@ -962,7 +964,7 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
             pass
         elif 'network' in kwargs:
             network = kwargs['network']
-        elif 'network' in self.default:
+        elif 'network' in  self.default:
             network = self.default['network']
 
         # Guess user name
@@ -993,6 +995,7 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
             groups = Parameter.expand(group)
 
         vm_label = label or name
+
 
         banner("Create Server")
         Console.msg(f"    Cloud:    {self.cloud}")
@@ -1042,8 +1045,8 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
                                                  )
             """
             server['user'] = user
-            server = self.cloudman.wait_for_server(server)
-            server = self.cloudman.add_ips_to_server(server, ips=ip)
+            r = self.cloudman.wait_for_server(server)
+            s = self.cloudman.add_ips_to_server(server, ips=ip)
             variables = Variables()
             variables['vm'] = name
             if metadata is None:
