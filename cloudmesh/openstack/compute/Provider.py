@@ -882,15 +882,21 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
 
         return r
 
-    def set_server_metadata(self, name, cm):
+    def set_server_metadata(self, name, **metadata):
         """
         Sets the server metadata from the cm dict
 
         :param name: The name of the vm
-        :param cm: The cm dict
+        :param metadata: The cm dict
         :return:
         """
-        data = {'cm': str(cm)}
+        data = {}
+        if metadata is not None and isinstance(metadata, dict) and 'cm' in metadata:
+            if isinstance(metadata['cm'], str):
+                import json
+                data.update(json.loads(metadata['cm'].replace('\'', '\"')))
+            else:
+                data.update(metadata['cm'])
         server = self.cloudman.get_server(name)
         self.cloudman.set_server_metadata(server, data)
 
@@ -956,7 +962,7 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
             pass
         elif 'network' in kwargs:
             network = kwargs['network']
-        elif 'network' in  self.default:
+        elif 'network' in self.default:
             network = self.default['network']
 
         # Guess user name
@@ -987,7 +993,6 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
             groups = Parameter.expand(group)
 
         vm_label = label or name
-
 
         banner("Create Server")
         Console.msg(f"    Cloud:    {self.cloud}")
@@ -1037,8 +1042,8 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
                                                  )
             """
             server['user'] = user
-            r = self.cloudman.wait_for_server(server)
-            s = self.cloudman.add_ips_to_server(server, ips=ip)
+            server = self.cloudman.wait_for_server(server)
+            server = self.cloudman.add_ips_to_server(server, ips=ip)
             variables = Variables()
             variables['vm'] = name
             if metadata is None:
@@ -1191,9 +1196,13 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
         #
 
         # VERBOSE(vm)
-
         # metadata = eval(vm['metadata'])
-        metadata = vm['metadata']
+        metadata = {}
+        if isinstance(vm['metadata'], str):
+            import ast
+            metadata.update(ast.literal_eval(vm['metadata']))
+        elif isinstance(vm['metadata'], dict):
+            metadata.update(vm['metadata'])
 
         ip = vm['ip_public']
         key_name = vm['key_name']
@@ -1227,6 +1236,8 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
               "-o UserKnownHostsFile=/dev/null " \
               f"-i {key} {location} {command}"
         cmd = cmd.strip()
+
+        print("**", cmd)
         # VERBOSE(cmd)
 
         if command == "":
