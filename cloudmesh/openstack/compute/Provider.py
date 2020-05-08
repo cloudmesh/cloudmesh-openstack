@@ -8,7 +8,7 @@ from pprint import pprint
 import sys
 
 import openstack
-
+from cloudmesh.common.debug import VERBOSE
 from cloudmesh.abstract.ComputeNodeABC import ComputeNodeABC
 from cloudmesh.common.DateTime import DateTime
 from cloudmesh.common.DictList import DictList
@@ -882,7 +882,7 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
 
         return r
 
-    def set_server_metadata(self, name, cm):
+    def set_server_metadata(self, name, **kwargs):
         """
         Sets the server metadata from the cm dict
 
@@ -890,14 +890,47 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
         :param cm: The cm dict
         :return:
         """
-        data = {'cm': str(cm)}
+        VERBOSE(kwargs)
+        # leght of metadata is resricted, so e limit
+        cm = kwargs["cm"]
+        cm_dict= eval(cm)
+
+        del cm_dict['created']
+        # del cm_dict['kind']
+        # del cm_dict['collection']
+        if 'image' in kwargs:
+            cm_dict['image'] = kwargs['image']
+
+        cm = str(cm_dict).replace("': ", "':")
+
+        data = {
+            'cm': cm,
+        }
+        for key in cm_dict.keys():
+            data[f"cm.{key}"] = cm_dict[key]
+        VERBOSE(data)
+
         server = self.cloudman.get_server(name)
+
+
         self.cloudman.set_server_metadata(server, data)
 
     def get_server_metadata(self, name):
         server = self.info(name=name)
         m = self.cloudman.get_server_meta(server)
         data = dict(m['server_vars']['metadata'])
+        VERBOSE(data)
+
+        cm = dict()
+
+        for key in data.keys():
+            cm_key = key
+            if "cm." in _key:
+                cm_key = _key.replace("cm.", "")
+            else:
+                continue
+            cm[cm_key] = data[key]
+        VERBOSE(data)
         return data
 
     def delete_server_metadata(self, name, key):
