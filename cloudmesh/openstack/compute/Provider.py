@@ -907,7 +907,7 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
             'cm': cm,
         }
         for key in cm_dict.keys():
-            data[f"cm.{key}"] = cm_dict[key]
+            data[f"cm_{key}"] = cm_dict[key]
         VERBOSE(data)
 
         server = self.cloudman.get_server(name)
@@ -925,8 +925,8 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
 
         for key in data.keys():
             cm_key = key
-            if "cm." in _key:
-                cm_key = _key.replace("cm.", "")
+            if "cm_" in _key:
+                cm_key = _key.replace("cm_", "")
             else:
                 continue
             cm[cm_key] = data[key]
