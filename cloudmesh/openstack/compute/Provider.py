@@ -882,55 +882,47 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
 
         return r
 
-    def set_server_metadata(self, name, **kwargs):
+    def set_server_metadata(self, name, **metadata):
         """
         Sets the server metadata from the cm dict
 
         :param name: The name of the vm
-        :param cm: The cm dict
+        :param metadata: The cm dict
         :return:
         """
-        VERBOSE(kwargs)
+        # VERBOSE(metadata)
         # leght of metadata is resricted, so e limit
-        cm = kwargs["cm"]
-        cm_dict= eval(cm)
+        data = {}
+        if metadata is not None and isinstance(metadata, dict) and 'cm' in metadata:
+            if isinstance(metadata['cm'], str):
+                import json
+                data.update(json.loads(metadata['cm'].replace('\'', '\"')))
+            else:
+                data.update(metadata['cm'])
 
-        del cm_dict['created']
-        # del cm_dict['kind']
-        # del cm_dict['collection']
-        if 'image' in kwargs:
-            cm_dict['image'] = kwargs['image']
-
-        cm = str(cm_dict).replace("': ", "':")
-
-        data = dict({})
-
-        for key in cm_dict.keys():
-            data[f"cm_{key}"] = cm_dict[key]
-        VERBOSE(data)
+        _data = {}
+        for key in data.keys():
+            _data[f"cm_{key}"] = data[key]
+        # VERBOSE(_data)
 
         server = self.cloudman.get_server(name)
 
-
-        self.cloudman.set_server_metadata(server, data)
+        self.cloudman.set_server_metadata(server, _data)
 
     def get_server_metadata(self, name):
         server = self.info(name=name)
         m = self.cloudman.get_server_meta(server)
         data = dict(m['server_vars']['metadata'])
-        VERBOSE(data)
+        # VERBOSE(data)
 
         cm = dict()
-
         for key in data.keys():
-            cm_key = key
-            if "cm_" in _key:
-                cm_key = _key.replace("cm_", "")
-            else:
-                continue
-            cm[cm_key] = data[key]
-        VERBOSE(data)
-        return data
+            if "cm_" in key:
+                cm_key = key.replace("cm_", "")
+                cm[cm_key] = data[key]
+
+        # VERBOSE(cm)
+        return cm
 
     def delete_server_metadata(self, name, key):
         server = self.info(name=name)
@@ -1069,8 +1061,8 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
                                                  )
             """
             server['user'] = user
-            r = self.cloudman.wait_for_server(server)
-            s = self.cloudman.add_ips_to_server(server, ips=ip)
+            server = self.cloudman.wait_for_server(server)
+            server = self.cloudman.add_ips_to_server(server, ips=ip)
             variables = Variables()
             variables['vm'] = name
             if metadata is None:
@@ -1222,15 +1214,14 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
         # TODO: fix user name issue, should be stored in db
         #
 
-        metadata = vm['metadata']
-
-        #
-        # there is a bug somewhere
-        #
-        # print(type(metadata))
-        if type(metadata) == str:
-            metadata = eval(metadata)
-            Console.error("VM not yet ready for login")
+        # VERBOSE(vm)
+        # metadata = eval(vm['metadata'])
+        metadata = {}
+        if isinstance(vm['metadata'], str):
+            import ast
+            metadata.update(ast.literal_eval(vm['metadata']))
+        elif isinstance(vm['metadata'], dict):
+            metadata.update(vm['metadata'])
 
         ip = vm['ip_public']
         key_name = vm['key_name']
