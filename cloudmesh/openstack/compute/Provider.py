@@ -903,9 +903,8 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
 
         cm = str(cm_dict).replace("': ", "':")
 
-        data = {
-            'cm': cm,
-        }
+        data = dict({})
+
         for key in cm_dict.keys():
             data[f"cm_{key}"] = cm_dict[key]
         VERBOSE(data)
