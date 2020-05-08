@@ -1223,16 +1223,21 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
         # TODO: fix user name issue, should be stored in db
         #
 
-        # VERBOSE(vm)
-
-        # metadata = eval(vm['metadata'])
         metadata = vm['metadata']
+
+        #
+        # there is a bug somewhere
+        #
+        # print(type(metadata))
+        if type(metadata) == str:
+            metadata = eval(metadata)
+            Console.error("VM not yet ready for login")
 
         ip = vm['ip_public']
         key_name = vm['key_name']
 
-        # if type(metadata['image']) == str:
-        #    metadata['image'] = eval(metadata['image'])
+        # VERBOSE(metadata)
+        # VERBOSE(metadata['image'])
 
         image = metadata['image']
         user = Image.guess_username(image)
