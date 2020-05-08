@@ -8,7 +8,7 @@ from pprint import pprint
 import sys
 
 import openstack
-
+from cloudmesh.common.debug import VERBOSE
 from cloudmesh.abstract.ComputeNodeABC import ComputeNodeABC
 from cloudmesh.common.DateTime import DateTime
 from cloudmesh.common.DictList import DictList
@@ -890,6 +890,8 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
         :param metadata: The cm dict
         :return:
         """
+        # VERBOSE(metadata)
+        # leght of metadata is resricted, so e limit
         data = {}
         if metadata is not None and isinstance(metadata, dict) and 'cm' in metadata:
             if isinstance(metadata['cm'], str):
@@ -897,16 +899,30 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
                 data.update(json.loads(metadata['cm'].replace('\'', '\"')))
             else:
                 data.update(metadata['cm'])
+
+        _data = {}
+        for key in data.keys():
+            _data[f"cm_{key}"] = data[key]
+        # VERBOSE(_data)
+
         server = self.cloudman.get_server(name)
 
-
-        self.cloudman.set_server_metadata(server, data)
+        self.cloudman.set_server_metadata(server, _data)
 
     def get_server_metadata(self, name):
         server = self.info(name=name)
         m = self.cloudman.get_server_meta(server)
         data = dict(m['server_vars']['metadata'])
-        return data
+        # VERBOSE(data)
+
+        cm = dict()
+        for key in data.keys():
+            if "cm_" in key:
+                cm_key = key.replace("cm_", "")
+                cm[cm_key] = data[key]
+
+        # VERBOSE(cm)
+        return cm
 
     def delete_server_metadata(self, name, key):
         server = self.info(name=name)
@@ -1210,8 +1226,8 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
         ip = vm['ip_public']
         key_name = vm['key_name']
 
-        # if type(metadata['image']) == str:
-        #    metadata['image'] = eval(metadata['image'])
+        # VERBOSE(metadata)
+        # VERBOSE(metadata['image'])
 
         image = metadata['image']
         user = Image.guess_username(image)
