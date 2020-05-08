@@ -1236,8 +1236,6 @@ class Provider(ComputeNodeABC, ComputeProviderPlugin):
               "-o UserKnownHostsFile=/dev/null " \
               f"-i {key} {location} {command}"
         cmd = cmd.strip()
-
-        print("**", cmd)
         # VERBOSE(cmd)
 
         if command == "":
