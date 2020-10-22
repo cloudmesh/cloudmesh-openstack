@@ -23,41 +23,13 @@ from cloudmesh.image.Image import Image
 from cloudmesh.mongo.CmDatabase import CmDatabase
 from cloudmesh.provider import ComputeProviderPlugin
 from cloudmesh.secgroup.Secgroup import Secgroup, SecgroupRule
-
+from cloudmesh.chameleon.Chameleon import Chameleon
 
 class Provider(ComputeNodeABC, ComputeProviderPlugin):
     kind = "openstack"
 
-    sample = """
-    cloudmesh:
-      cloud:
-        {name}:
-          cm:
-            active: true
-            heading: {name}
-            host: TBD
-            label: {name}
-            kind: openstack
-            version: TBD
-            service: compute
-          credentials:
-            auth:
-              auth_url: "https://kvm.tacc.chameleoncloud.org:5000/v3"
-              username: TBD
-              project_id: {project_id}
-              project_name: {project_name}
-              user_domain_name: "Default"
-              password: TBD
-            region_name: {region}
-            interface: "public"
-            identity_api_version: "3"
-            key_path: ~/.ssh/id_rsa.pub
-          default:
-            size: m1.medium
-            image: CC-Ubuntu18.04
-            username: TBD
-            network: {network_id}
-        """
+
+    sample = Chameleon.sample
 
     vm_state = [
         'ACTIVE',
