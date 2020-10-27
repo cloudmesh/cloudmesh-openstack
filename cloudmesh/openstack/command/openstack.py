@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 from cloudmesh.common.console import Console
 from cloudmesh.common.variables import Variables
 from cloudmesh.configuration.Config import Config
